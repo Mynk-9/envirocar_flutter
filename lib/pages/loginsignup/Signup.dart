@@ -1,10 +1,12 @@
-import 'package:envirocar_flutter/pages/loginsignup/components/CustomCheckbox.dart';
 import 'package:flutter/material.dart';
 
-import 'package:envirocar_flutter/pages/loginsignup/Signup.dart';
+import 'package:envirocar_flutter/apis/Auth.dart';
+
 import 'package:envirocar_flutter/pages/loginsignup/components/CustomInputField.dart';
+import 'package:envirocar_flutter/pages/loginsignup/components/CustomCheckbox.dart';
 import 'package:envirocar_flutter/shared_components/BlueButton.dart';
 import 'package:envirocar_flutter/theme/colors_cario.dart';
+import 'package:envirocar_flutter/apis/Validators.dart';
 
 class SignupPage extends StatefulWidget {
   SignupPage({Key key}) : super(key: key);
@@ -15,6 +17,41 @@ class SignupPage extends StatefulWidget {
 
 class _SignupPageState extends State<SignupPage> {
   final _formKey = GlobalKey<FormState>();
+
+  final usernameController = TextEditingController();
+  final emailController = TextEditingController();
+  final passwordController = TextEditingController();
+  final passwordConfirmController = TextEditingController();
+
+  Function signupHandler = (String username,
+      String email,
+      String password,
+      bool agreeTnC,
+      bool agreePS,
+      GlobalKey<FormState> form,
+      BuildContext _context) async {
+    if (form.currentState.validate()) {
+      if (await Auth.signup(username, email, password, agreeTnC, agreePS)) {
+        ScaffoldMessenger.of(_context)
+            .showSnackBar(SnackBar(content: Text('Signup successful. Please verify your email.')));
+      } else {
+        ScaffoldMessenger.of(_context)
+            .showSnackBar(SnackBar(content: Text('Signup Failed')));
+      }
+    } else {
+      ScaffoldMessenger.of(_context)
+          .showSnackBar(SnackBar(content: Text('Invalid data entered')));
+    }
+  };
+
+  @override
+  void dispose() {
+    usernameController.dispose();
+    emailController.dispose();
+    passwordController.dispose();
+    passwordConfirmController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -60,12 +97,14 @@ class _SignupPageState extends State<SignupPage> {
                           Icons.person,
                           color: Colors.white,
                         ),
-                        validator: (val) {
-                          if (val == "yeah")
+                        validator: (String val) {
+                          val = val.trim();
+                          if (Validator.validateUsername(val))
                             return null;
                           else
-                            return "type \"yeah\"";
+                            return "Enter valid username";
                         },
+                        controller: usernameController,
                       ),
                       CustomInputField(
                         hintText: "E-Mail",
@@ -73,6 +112,14 @@ class _SignupPageState extends State<SignupPage> {
                           Icons.email,
                           color: Colors.white,
                         ),
+                        validator: (String val) {
+                          val = val.trim();
+                          if (Validator.validateEmail(val))
+                            return null;
+                          else
+                            return "Enter valid email";
+                        },
+                        controller: emailController,
                       ),
                       CustomInputField(
                         hintText: "Password",
@@ -80,6 +127,8 @@ class _SignupPageState extends State<SignupPage> {
                           Icons.lock,
                           color: Colors.white,
                         ),
+                        isPassword: true,
+                        controller: passwordController,
                       ),
                       CustomInputField(
                         hintText: "Confirm Password",
@@ -87,6 +136,15 @@ class _SignupPageState extends State<SignupPage> {
                           Icons.lock,
                           color: Colors.white,
                         ),
+                        isPassword: true,
+                        validator: (String val) {
+                          if (passwordController.text ==
+                              passwordConfirmController.text)
+                            return null;
+                          else
+                            return "Passwords don't match";
+                        },
+                        controller: passwordConfirmController,
                       ),
 
                       // checkboxes
@@ -100,14 +158,14 @@ class _SignupPageState extends State<SignupPage> {
                             CustomCheckbox(
                               title: Flexible(
                                 child: Text(
-                                  "I acknowledge I have read and agree to enviroCar's Terms and Conditions",
+                                  "I acknowledge I have read and agree to enviroCar's Terms and Conditions.",
                                 ),
                               ),
                               validator: (check) {
                                 if (check)
                                   return null;
                                 else
-                                  return "Check this.";
+                                  return "Please accept Terms and Conditions";
                               },
                             ),
                             CustomCheckbox(
@@ -116,6 +174,12 @@ class _SignupPageState extends State<SignupPage> {
                                   "I have taken note of the Privacy Statement.",
                                 ),
                               ),
+                              validator: (check) {
+                                if (check)
+                                  return null;
+                                else
+                                  return "Please accept Privacy Statement";
+                              },
                             ),
                           ],
                         ),
@@ -126,11 +190,15 @@ class _SignupPageState extends State<SignupPage> {
                         padding: const EdgeInsets.symmetric(vertical: 8.0),
                         child: BlueButton(
                           "Submit",
-                          () {
-                            if (_formKey.currentState.validate())
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text('Processing Data')));
-                          },
+                          () => signupHandler(
+                            usernameController.text.trim(),
+                            emailController.text.trim(),
+                            passwordController.text,
+                            true,
+                            true,
+                            _formKey,
+                            context,
+                          ),
                         ),
                       ),
 
