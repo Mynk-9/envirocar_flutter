@@ -13,23 +13,11 @@ class CustomCheckbox extends FormField<bool> {
           initialValue: initialValue,
           builder: (FormFieldState<bool> state) {
             return Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.start,
               children: [
                 Checkbox(
-                  // dense: state.hasError,
-                  // title: title,
                   value: state.value,
                   onChanged: state.didChange,
-                  // subtitle: state.hasError
-                  //     ? Builder(
-                  //         builder: (BuildContext context) => Text(
-                  //           state.errorText,
-                  //           style:
-                  //               TextStyle(color: Theme.of(context).errorColor),
-                  //         ),
-                  //       )
-                  //     : null,
-                  // controlAffinity: ListTileControlAffinity.leading,
                 ),
                 title,
                 state.hasError
