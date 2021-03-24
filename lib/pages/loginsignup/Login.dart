@@ -5,7 +5,8 @@ import 'package:envirocar_flutter/pages/loginsignup/components/CustomInputField.
 import 'package:envirocar_flutter/shared_components/BlueButton.dart';
 import 'package:envirocar_flutter/theme/colors_cario.dart';
 
-import './../../apis/Auth.dart';
+import 'package:envirocar_flutter/apis/Auth.dart';
+import 'package:envirocar_flutter/apis/Validators.dart';
 
 class LoginPage extends StatefulWidget {
   LoginPage({Key key}) : super(key: key);
@@ -16,6 +17,33 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
+
+  Function loginHandler = (String username, String password,
+      GlobalKey<FormState> form, BuildContext _context) async {
+    if (form.currentState.validate()) {
+      if (await Auth.login(username, password)) {
+        ScaffoldMessenger.of(_context)
+            .showSnackBar(SnackBar(content: Text('Login Successful')));
+      } else {
+        ScaffoldMessenger.of(_context)
+            .showSnackBar(SnackBar(content: Text('Login Failed')));
+      }
+    } else {
+      ScaffoldMessenger.of(_context)
+          .showSnackBar(SnackBar(content: Text('Invalid data entered')));
+    }
+  };
+
+  final usernameController = TextEditingController();
+  final passwordController = TextEditingController();
+
+  // override dispose because controllers are used
+  @override
+  void dispose() {
+    usernameController.dispose();
+    passwordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -61,12 +89,14 @@ class _LoginPageState extends State<LoginPage> {
                           Icons.person,
                           color: Colors.white,
                         ),
-                        validator: (val) {
-                          if (val == "yeah")
+                        validator: (String val) {
+                          val = val.trim();
+                          if (Validator.validateUsername(val))
                             return null;
                           else
-                            return "type \"yeah\"";
+                            return "Enter valid username";
                         },
+                        controller: usernameController,
                       ),
                       CustomInputField(
                         hintText: "Password",
@@ -74,19 +104,24 @@ class _LoginPageState extends State<LoginPage> {
                           Icons.lock,
                           color: Colors.white,
                         ),
+                        isPassword: true,
+                        validator: (String val) {
+                          val = val.trim();
+                          if (val.isNotEmpty)
+                            return null;
+                          else
+                            return "Enter password";
+                        },
+                        controller: passwordController,
                       ),
 
                       // login button
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 8.0),
-                        child: BlueButton(
-                          "Login",
-                          () {
-                            if (_formKey.currentState.validate())
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text('Processing Data')));
-                          },
-                        ),
+                        child: BlueButton("Login", () {
+                          loginHandler(usernameController.text.trim(),
+                              passwordController.text, _formKey, context);
+                        }),
                       ),
 
                       // spacing
